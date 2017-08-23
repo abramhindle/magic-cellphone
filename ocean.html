@@ -1,0 +1,312 @@
+<!doctype html>
+<html>
+  <head>
+    <title>OCEAN Magic!</title>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="Magic Cellphone">
+    <meta name="msapplication-TileImage" content="128x128.png">
+    <meta name="msapplication-TileColor" content="#2F3BA2">
+
+    <link rel="apple-touch-icon" href="128x128.png">
+
+    <style>
+#canvas {
+        width: 100%;
+        height: 100%;
+}
+#runsum {
+    color: white;
+    position: absolute;
+}
+#sensitivity {
+    position: absolute;
+}
+</style>
+    <script src="./gibberish3.js"></script>
+  </head>
+    <body>
+    <span id="runsum"></span>
+    <input type="range" id="sensitivity" min="0" step="0.005" max="0.2"/>
+    <div>
+      <canvas id="canvas">
+      </canvas>
+    </div>
+    <script>
+/* Some ideas were taken from
+
+ * Mozilla https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getUserMedia
+
+*/
+var width = 320;
+var height = 240;
+var trigger = 0.01;
+
+var constraints = {
+    video: {
+        frameRate: { ideal: 15, max: 30 },
+        width: { min: height, ideal: width },
+        height: { min: height, ideal: height },
+        facingMode: "user" 
+    }
+};
+
+var promise = navigator.mediaDevices.getUserMedia(constraints);
+promise.then(function(mediaStream) {
+    var video = document.createElement("video");
+    //var video = document.querySelector('video');
+    video.srcObject = mediaStream;
+    video.onloadedmetadata = function(e) {
+        video.play();
+        video.volume = 0.0;
+        startFrameDifferencer(video);
+    };
+})
+.catch(function(err) { console.log(err.name + ": " + err.message); });
+
+
+function playVideo() {
+    var video = document.createElement("video");
+    video.src = 'demo.mp4';
+    video.volume = 0.0;
+    video.loop = true;
+    video.onloadedmetadata = function(e) {
+        video.play();
+        //video.volume = 0.0;
+        startFrameDifferencer(video);
+    };
+    video.autoPlay = true;
+}
+
+//playVideo();
+
+var dinterval;
+
+var currentFrame = document.createElement("canvas");
+var lastFrame    = document.createElement("canvas");
+var callBack = null;
+
+
+function startFrameDifferencer(video) {
+    //var video = document.querySelector('video');
+    var runSumDom = document.getElementById('runsum');   
+    var canvas = document.querySelector('canvas');
+    var context = canvas.getContext('2d');
+    var currentContext = currentFrame.getContext('2d');
+    var lastContext = lastFrame.getContext('2d');
+    dinterval = window.setInterval(function() {
+        currentContext.drawImage(video,0,0,320,240);
+        var outpix = context.getImageData(0,0,320,240);
+        var current = currentContext.getImageData(0,0,320,240);
+        var last    = lastContext.getImageData(0,0,320,240);
+        var cd = current.data;
+        var ld = last.data;
+        var od = outpix.data;
+        var mix = 0.5;
+        var imix = 1.0 - mix;
+        var cdc = 0;
+        var ldc = 0;
+        var o = 0;
+        var runsum = 0;
+        var diff;
+        for (var i = 0 ; i < od.length ; i+=4) {
+            ldc = ld[i+0] + ld[i+1] + ld[i + 2];
+            cdc = cd[i+0] + cd[i+1] + cd[i + 2];
+            diff = cdc - ldc;
+            o = (od[i+2]*mix + imix * ( diff*diff>>9 )) % 255;
+            od[i+0] = o;
+            od[i+1] = o;
+            od[i+2] = o;            
+            od[i+3] = cd[i+3];
+            runsum += o;
+        }
+        outpix.data = od;
+        lastContext.putImageData(current,0,0);
+        context.putImageData(outpix,0,0);
+        runSumDom.textContent = ""+runsum;
+        if (callBack != null) {
+            callBack(runsum,od);
+        }
+    },1000/15.0);
+}
+
+// Boxes cuts the area into 64 boxes and then uses the callback
+function boxes(runsum,od,callBack) {
+    var b = new Array(64).fill(0);
+    var x;
+    var y;
+    var nx;
+    var ny;
+    var pixels = od.length / 4;
+    for (var i = 0; i < pixels ; i++) {
+        x = i % width;
+        y = Math.floor(i / width);
+        nx = Math.floor(8.0 * x / width);
+        ny = Math.floor(8.0 * y / height);
+        b[nx + 8 * ny] += od[i*4+0];
+    }
+    if (callBack!=null) {
+        return callBack(runsum,od,b);
+    } else {
+        return b;
+    }
+}
+
+function colsum(arr,w,h) {
+    var b = new Array(w).fill(0);
+    for (var i = 0; i < w ; i++) {
+        for (var j = 0; j < h ; j++) {
+            b[i] += arr[w*j + i];
+        }        
+    }
+    return b;
+}
+
+function rowsum(arr,w,h) {
+    var b = new Array(w).fill(0);
+    for (var i = 0; i < h ; i++) {
+        for (var j = 0; j < w ; j++) {
+            b[i] += arr[w*i + j];
+        }        
+    }
+    return b;
+}
+function average(arr) {
+    var bsum = arr.reduce((a,c) => a + c, 0);
+    return bsum / arr.length;
+}
+function argmax(arr) {
+    var x = arr[0];
+    var xi = 0;
+    for (var i = 1; i < arr.length; i++) {
+        if (x < arr[i]) {
+            xi = i;
+            x = arr[i];
+        }
+    }
+    return xi;
+}
+function maxi(arr) {
+    var x = arr[0];
+    var xi = 0;
+    for (var i = 1; i < arr.length; i++) {
+        if (x < arr[i]) {
+            xi = i;
+            x = arr[i];
+        }
+    }
+    return [xi,x];
+}
+
+function metrics(runsum,od,callBack) {
+    var b = boxes(runsum,od,null);
+    var bcols = colsum(b,8,8);
+    var brows = rowsum(b,8,8);
+    var bsum = b.reduce((a,c) => a + c, 0);
+    var bavg = bsum / b.length;
+    var output = {
+        boxes: b,
+        sum: bsum,
+        avg: bavg,
+        cols: bcols,
+        rows: brows,
+        avgcols: average(bcols),
+        avgrows: average(brows),
+        maxcol: maxi(bcols),
+        maxrow: maxi(brows)
+    };
+    console.log(output.maxcol + " " + output.maxrow);
+    if (callBack!=null) {
+        return callBack(runsum,od,output);
+    } else {
+        return output;
+    }
+}
+
+// Boxes cuts the area into 64 boxes and then uses the callback
+function meansum(runsum,od,callBack) {
+    var ms = 0.0;
+    var x;
+    var y;
+    var nx;
+    var ny;
+    var pixels = od.length / 4;
+    for (var i = 0; i < pixels ; i++) {
+        x = i % width;
+        y = Math.floor(i / width);
+        nx = Math.floor(8.0 * x / width);
+        ny = Math.floor(8.0 * y / height);
+        ms += od[i*4+0];
+    }
+    ms /= 256*pixels;
+    if (callBack!=null) {
+        return callBack(runsum,od,ms);
+    } else {
+        return ms;
+    }
+}
+
+
+
+function printBoxes(runsum,od,b) {
+    for (var i = 0 ; i < b.length; i++) {
+        if (b[i] >= trigger) {
+            console.log(i+" "+b[i]);
+        }
+    }
+}
+
+
+
+window.addEventListener("load", function() {
+    console.log("onload");
+    var sensitivity = document.getElementById("sensitivity");
+    sensitivity.value = trigger;
+    sensitivity.addEventListener("change", function(e) {
+        trigger = this.value;
+        console.log(trigger);
+    });
+    Gibberish.init();
+
+    var env = ADSR({attack:10000, decay:10000, release:44100*3, sustain: 0.9, triggerRelease: true});
+    var saw = Saw({frequency: 0.3});
+    var noise = Noise({color:"pink", gain:Mul(10,env,Abs(saw))});
+    Clamp(noise,-1.0,1.0).connect();
+    env.advance();
+    var state = "nothing";
+    var mixit = function(runsum,od,mix) {
+        if (mix > trigger) {
+            if (state !== "triggered") {
+                env.trigger();
+                state = "triggered";
+                console.log(state);
+            }
+        } else {
+            if (state === "triggered") {
+                env.advance();
+                state = "advancing";
+                console.log(state);
+            }
+        }
+    } 
+    callBack = function(runsum,od) {
+        meansum(runsum,od,mixit);
+    };
+
+    
+});
+
+
+if('serviceWorker' in navigator) {
+  navigator.serviceWorker
+           .register('/sw.js')
+           .then(function() { console.log("Service Worker Registered"); });
+} else {
+    console.log("No serviceWorker");
+}
+
+</script>
+    
+  </body>
+</html>
