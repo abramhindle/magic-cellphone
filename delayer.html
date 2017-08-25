@@ -90,7 +90,7 @@ var callBack = null;
 
 function startFrameDifferencer(video) {
     //var video = document.querySelector('video');
-    var runSumDom = document.getElementById('runsum');   
+    //var runSumDom = document.getElementById('runsum');   
     var canvas = document.querySelector('canvas');
     var context = canvas.getContext('2d');
     var currentContext = currentFrame.getContext('2d');
@@ -123,7 +123,7 @@ function startFrameDifferencer(video) {
         }
         outpix.data = od;
         lastContext.putImageData(current,0,0);
-        context.putImageData(outpix,0,0);
+        //context.putImageData(outpix,0,0);
         //runSumDom.textContent = ""+runsum;
         if (callBack != null) {
             callBack(runsum,od);
