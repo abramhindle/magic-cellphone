@@ -277,17 +277,18 @@ window.addEventListener("load", function() {
     syn = PolySynth({
         maxVoices:3,
         waveform: 'saw',
-        gain:15.5,
-        panVoices:true,
-        attack: 88200, decay:88200,
-        pan: Abs( Sine({ frequency:1 }) )
+        gain:0.5,
+        attack: 8820, decay:88200,
     })
+
+    //Clamp(Merge(syn),-1.0,1.0).connect()
     
-    verb = Plate({ input:Bus2(), decay:.99, predelay:20 })//.connect()
-    
+                        
+    verb = Plate({ input:syn, decay:.99, predelay:20 })//.connect()
     Clamp(Merge(verb),-1.0,1.0).connect()
+    //Clamp(Merge(verb),-1.0,1.0).connect()
     //Clamp({input:verb,min:-0.9,max:0.9}).connect()
-    syn.connect( verb.input )
+    //syn.connect( verb.input )
 
                         
 
