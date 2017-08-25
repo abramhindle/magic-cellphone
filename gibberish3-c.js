@@ -3451,7 +3451,7 @@ let utilities = {
   },
 
   createScriptProcessor() {
-    this.node = this.ctx.createScriptProcessor( 1024, 0, 2 )
+    this.node = this.ctx.createScriptProcessor( 4096, 0, 2 )
     this.clearFunction = function() { return 0 }
     if( typeof this.callback === 'undefined' ) this.callback = this.clearFunction
 
