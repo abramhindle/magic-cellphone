@@ -132,7 +132,7 @@ function startFrameDifferencer(video) {
         if (callBack != null) {
             callBack(runsum,od);
         }
-    },1000/10.0);
+    },2*1000/(44100/4096));
 }
 
 // Boxes cuts the area into 64 boxes and then uses the callback
