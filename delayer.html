@@ -123,12 +123,12 @@ function startFrameDifferencer(video) {
         }
         outpix.data = od;
         lastContext.putImageData(current,0,0);
-        //context.putImageData(outpix,0,0);
+        context.putImageData(outpix,0,0);
         //runSumDom.textContent = ""+runsum;
         if (callBack != null) {
             callBack(runsum,od);
         }
-    },1000/15.0);
+    },1000/10.0);
 }
 
 // Boxes cuts the area into 64 boxes and then uses the callback
@@ -164,7 +164,7 @@ function colsum(arr,w,h) {
 }
 
 function rowsum(arr,w,h) {
-    var b = new Array(w).fill(0);
+    var b = new Array(h).fill(0);
     for (var i = 0; i < h ; i++) {
         for (var j = 0; j < w ; j++) {
             b[i] += arr[w*i + j];
@@ -280,7 +280,8 @@ window.addEventListener("load", function() {
     ssd1 = SSD()
     ssd2 = SSD()
 
-    syn3 = Add(syn, syn2, Noise({color:"pink",gain:0.01}))
+    //syn3 = Add(syn, syn2, Noise({color:"pink",gain:0.01}))
+    syn3 = Add(syn, syn2)
     delay1 = Delay({ input:Add( syn3, ssd1.out ), time:44, feedback:0
                    }).connect()
     delay2 = Delay({ input:Add( syn3, ssd2.out ), time:4410, feedback:0
@@ -296,18 +297,22 @@ window.addEventListener("load", function() {
         let mix = metrics["sum"]
         //console.log(metrics);
         if (mix > trigger) {
-            let offset = 20 + 10*(metrics["maxrow"][0])
+            let offset = 20 + 10*(metrics["maxcol"][0])
+            //console.log(metrics["maxcol"]);
+            //console.log(metrics["cols"]);
+
             //if (state !== "triggered") {
-                var n = Math.random()
-                syn.note(n*offset+20)
-                syn2.note(n*2*offset+20)
-                state = "triggered";
-                //console.log(state);
+            //var n = Math.random()
+            var n = 1;
+            syn.note(n*offset+20)
+            syn2.note(n*2*offset+20)
+            state = "triggered";
+            //console.log(state);
             //}
         } else {
             //if (state === "triggered") {
             //    syn.env.release();
-                state = "advancing";
+            state = "advancing";
             //    console.log(state);
             //}
         }
