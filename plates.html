@@ -39,15 +39,19 @@
  * Mozilla https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getUserMedia
 
 */
+/* 
 var width = 320;
 var height = 240;
+*/
+var width = 320/4;
+var height = 240/4;
 var trigger = 0.01;
 
 var constraints = {
     video: {
         frameRate: { ideal: 15, max: 30 },
         width: { min: height, ideal: width },
-        height: { min: height, ideal: height },
+        height: { min: height, ideal: width },
         facingMode: "user" 
     }
 };
@@ -96,10 +100,10 @@ function startFrameDifferencer(video) {
     var currentContext = currentFrame.getContext('2d');
     var lastContext = lastFrame.getContext('2d');
     dinterval = window.setInterval(function() {
-        currentContext.drawImage(video,0,0,320,240);
-        var outpix = context.getImageData(0,0,320,240);
-        var current = currentContext.getImageData(0,0,320,240);
-        var last    = lastContext.getImageData(0,0,320,240);
+        currentContext.drawImage(video,0,0,width,height);
+        var outpix = context.getImageData(0,0,width,height);
+        var current = currentContext.getImageData(0,0,width,height);
+        var last    = lastContext.getImageData(0,0,width,height);
         var cd = current.data;
         var ld = last.data;
         var od = outpix.data;
@@ -118,7 +122,7 @@ function startFrameDifferencer(video) {
             od[i+0] = o;
             od[i+1] = o;
             od[i+2] = o;            
-            od[i+3] = cd[i+3];
+            od[i+3] = 255;
             runsum += o;
         }
         outpix.data = od;
@@ -303,7 +307,7 @@ window.addEventListener("load", function() {
             var n = 100*metrics["maxcol"][0]/8.0;
             var x = 100 + 100*Math.random();
             //console.log([n,x]);
-            syn.gain = 10*Math.random()
+            syn.gain = 0.5*Math.random()
             syn.chord( [x-n,2*x-n,3*x-n] )
             
             state = "triggered";
