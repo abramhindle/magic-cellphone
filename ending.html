@@ -1,0 +1,73 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Ending</title>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="Magic Cellphone">
+    <meta name="msapplication-TileImage" content="128x128.png">
+    <meta name="msapplication-TileColor" content="#2F3BA2">
+
+    <link rel="apple-touch-icon" href="128x128.png">
+
+    <style>
+      body {
+        width: 100%;
+        height: 100%;
+      }
+#canvas {
+        width: 100%;
+        height: 100%;
+}
+#bigdiv {
+        width: 100%;
+        height: 100%;
+}
+
+      #runsum {
+    color: white;
+    position: absolute;
+}
+#sensitivity {
+    position: absolute;
+      }
+   
+</style>
+    <script src="./gibberish3-c.js"></script>
+  </head>
+    <body>
+    <div>
+    Ending, 30 seconds of fade out
+    </div>
+    <div>
+        <a href="./1.html?action=perform&time=60&next=./2.html">Click Here to Start</a>
+    </div>
+    
+    <script>
+
+window.addEventListener("load", function() {
+    console.log("onload");
+    Gibberish.init();
+    console.log("Gibberish Initted");
+    psyn = PolySynth({ 
+        maxVoices:6,
+        gain:1.0, 
+        waveform:'saw',
+        attack:44100*2,
+        decay:44100*18,
+        sustain:44100*1,
+        release:44100*10,
+        sustainLevel:0.5,
+    });
+    Mul(Merge(psyn),Sine({frequency:4440})).connect();
+    setTimeout(
+        function() {
+            console.log("Play Chord");
+            psyn.chord( [110/2,220/2,330/2,440/2,550/2,660/2] )},
+        1000);
+});
+
+</script>
+    
+  </body>
+</html>
