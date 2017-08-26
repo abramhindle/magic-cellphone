@@ -12,7 +12,10 @@ function checkAndInstallPerformance(nextTime,nextNextURL) {
             params.set("next",nextNextURL);
             var nextURL = nextLocation + "?" + params.toString();
             console.log("setting timeout to transition to " + nextURL + " in " + time  + " milliseconds");
-            performTimeout = setTimeout(function() { window.location.href = nextUrl; }, time);
+            performTimeout = setTimeout(function() {
+                console.log("Transition" + nextURL + " after " + time  + " milliseconds");
+                window.location.href = nextURL;
+            }, time);
         }
     }
 }
