@@ -2,7 +2,7 @@
 <html>
   <head>
     <title>OCEAN Magic!</title>
-    <link rel="manifest" href="/manifest.json">
+    <!-- <link rel="manifest" href="/manifest.json"> -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <meta name="apple-mobile-web-app-title" content="Magic Cellphone">
@@ -24,7 +24,9 @@
     position: absolute;
 }
 </style>
-    <script src="./gibberish3.js"></script>
+    <script type="text/javascript"  src="./performance.js"></script>
+    <script type="text/javascript"  src="./gibberish3.js"></script>
+
   </head>
     <body>
     <span id="runsum"></span>
@@ -293,11 +295,12 @@ window.addEventListener("load", function() {
     callBack = function(runsum,od) {
         meansum(runsum,od,mixit);
     };
-
-    
 });
 
+checkAndInstallPerformance(60, "2.html");    
 
+
+/*
 if('serviceWorker' in navigator) {
   navigator.serviceWorker
            .register('/sw.js')
@@ -305,6 +308,7 @@ if('serviceWorker' in navigator) {
 } else {
     console.log("No serviceWorker");
 }
+*/
 
 </script>
     

@@ -1,8 +1,7 @@
 <!doctype html>
 <html>
   <head>
-    <title>Plates</title>
-    <link rel="manifest" href="/manifest.json">
+    <title>PolyFM</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <meta name="apple-mobile-web-app-title" content="Magic Cellphone">
@@ -55,7 +54,7 @@ var height = 240;
 */
 var width = 320/4;
 var height = 240/4;
-var trigger = 0.01;
+var trigger = 0.5;
 
 var constraints = {
     video: {
@@ -325,6 +324,7 @@ window.addEventListener("load", function() {
             //console.log([n,x]);
             n = Math.random()*60
             bigfm.chord( [110/2+n,220/2+n,330/2+n,440/2+n] )
+            bigfm.index = 0.5 + metrics["maxrow"][0]/8.0;
             state = "triggered";
             //console.log(state);
             //}
