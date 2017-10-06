@@ -31,6 +31,11 @@
 #sensitivity {
     position: absolute;
       }
+#clickit {
+   width: 100%;
+   height: 30em;
+   background: yellow;
+}
    
 </style>
     <script src="./gibberish3-c.js"></script>
@@ -39,14 +44,19 @@
     <div>
         Playing a test chord
     </div>
-    <div>
-        <a href="./1.html?action=perform&time=60">Click Here to Start</a>
+    <div id="clickit">
+        <a id="next" href="./1.html?action=perform&time=60">Click Here to Start</a>
     </div>
     
     <script>
 
 window.addEventListener("load", function() {
     console.log("onload");
+    var clickit = document.getElementById("clickit");
+    clickit.onclick = function() { 
+        var a = document.getElementById("next");
+        a.click();
+    };
     Gibberish.init();
     console.log("Gibberish Initted");
     psyn = PolySynth({ 
@@ -65,6 +75,8 @@ window.addEventListener("load", function() {
             console.log("Play Chord");
             psyn.chord( [110,220,330,440,550,660] )},
         1000);
+   
+   
 });
 
 </script>
