@@ -16,6 +16,10 @@ function checkAndInstallPerformance(nextTime,nextNextURL) {
                 console.log("Transition" + nextURL + " after " + time  + " milliseconds");
                 window.location.href = nextURL;
             }, time);
+            backgroundTimeout = setTimeout(function() {
+                console.log("Background change");
+	        document.getElementsByTagName("body")[0].style.background = "red";
+            }, time - 10*1000);
         }
     }
 }
