@@ -24,7 +24,6 @@ html, body {
     <script src="./gibberish3.js"></script>
   </head>
     <body>
-    <input type="range" id="frequency" min="1" step="1" max="1000"/>
     <div id="guis">
     </div>
     <script>
@@ -37,14 +36,14 @@ Heaper = function(rhodes) {
     let memory = this.mem
     this.idx = memory.values.idx
     this.len = memory.values.length
-    this.buffer = new Float32Array( this.len )
-    this.frequency = 440
+    let idx = this.idx
+    let len = this.len
+    this.buffer = heap.subarray(idx, idx + this.len) // new Float32Array( this.len )
     this.blit = function() {
-        let idx = this.idx
-        let len = this.len
-        for ( var i = 0 ; i < len; i++ ) {
-            heap[idx + i] = this.buffer[i]
-        }
+        //let buffer = this.buffer
+        //for ( var i = 0 ; i < len; i++ ) {
+        //    heap[idx + i] = buffer[i]
+        //}
     }
 }
 
@@ -58,36 +57,36 @@ applyMem = function(heaper,f,start,range) {
     heaper.blit()
 }
 mulMem = function(heaper,x) {
-    let heap = heaper.buffer
-    let len = heap.len    
+    let buffer = heaper.buffer
+    let len = heaper.len    
     for( var i = 0; i < len; i++) {
-        hea[i] *= x
+        buffer[i] *= x
     }
     heaper.blit()
 }
 addMem = function(heaper,x) {
     let heap = heaper.buffer
-    let len = heap.len    
+    let len = heaper.len    
     for( var i = 0; i < len; i++) {
         heap[i] += x
     }
     heaper.blit()
 }
 quantize = function(heaper,n) {
-    applyMem(heaper,function(i,x) { return Math.round(x * n) / (1.0 * n)  },0,len);
+    applyMem(heaper,function(i,x) { return Math.round(x * n) / (1.0 * n)  },0,heaper.len);
 }
 identity = function(heaper) {
     applyMem(heaper,function(i,x) { return x },0,len)
 }
 clamp = function(heaper,low,high) {
-    applyMem(heaper,function(i,x) { return Math.min(high,Math.max(low,x)) },0,len); 
+    applyMem(heaper,function(i,x) { return Math.min(high,Math.max(low,x)) },0,heaper.len); 
 }
 noise = function(heaper,coef) {
-    applyMem(heaper,function(i,x) { return coef*Math.random() },0,len); 
+    applyMem(heaper,function(i,x) { return coef*Math.random() },0,heaper.len); 
 }
 zero = function(heaper) {
     let heap = heaper.buffer
-    let len = heap.len    
+    let len = heaper.len    
     for( var i = 0; i < len; i++) {
         heap[i] = 0.0;
     }
@@ -95,7 +94,7 @@ zero = function(heaper) {
 }
 meanNeighbor = function(heaper) {
     let heap = heaper.buffer
-    let len = heap.len    
+    let len = heaper.len    
     for( var i = 1; i < len-1; i++) {
         heap[i] = (heap[i - 1] + heap[i] + heap[i + 1])/3.0;
     }
@@ -104,7 +103,8 @@ meanNeighbor = function(heaper) {
     
 noiseInjector = function(heaper,chance) {
     let heap = heaper.buffer
-    let len = heap.len    
+    let len = heaper.len
+    console.log(heap)
     for( var i = 0; i < len; i++) {
         if (Math.random() < chance) {
             heap[i] = 2.0*Math.random() - 1.0;
@@ -116,16 +116,33 @@ noiseInjector = function(heaper,chance) {
     
 pasteRegion = function(heaper,n) {
     let heap = heaper.buffer
-    let len = heap.len    
+    let len = heaper.len    
     var start = Math.round(Math.random()*len)
     var newstart = Math.round(Math.random()*len)
     for (var i = 0; i < n; i++) {
      	if ((newstart + i) < len && (start + i) < len) {
-            heap[newstart + idx + i] = heap[start + idx + i] 
+            heap[newstart + i] = heap[start + i] 
         }
     }
     heaper.blit()
 }
+
+
+pasteRepeatRegion = function(heaper,n) {
+    let heap = heaper.buffer
+    let len = heaper.len    
+    var start = Math.round(Math.random()*len)
+    var newstart = Math.round(Math.random()*len)
+    var tmp = new Float32Array( n )
+    for (var i = 0; i < n; i++) {
+        tmp[i] = heap[(start  + i)%len] 
+    }
+    for (var i = 0; i < len; i++) {
+        heap[i] = tmp[i % tmp.length]
+    }
+    heaper.blit()
+}
+
 
 
 
@@ -138,6 +155,7 @@ window.addEventListener("load", function() {
         var orig = new Float32Array( n )
         var rhodes = Wavetable({ frequency: 440, buffer: orig  })
         rhodes.connect()
+        console.log(rhodes)
         return new Heaper(rhodes)
     })
     console.log("ready");
@@ -155,17 +173,28 @@ window.addEventListener("load", function() {
             decayerInterval = null
         }
     }
+
+    changeFrequency = function(heaper,freq) {
+        heaper.instr.frequency = parseFloat(freq)
+        if (heaper.dom !== undefined) {
+            heaper.dom.value = heaper.instr.frequency
+        }
+        console.log(heaper.instr.frequency)
+    }
+
     
     funFunctions = [
         { "name":"low Freq", "fun":heaper => changeFrequency(heaper,20) },
-        { "name":"Increase Freq", "fun":heaper => changeFrequency(heaper,1.1*frequency) },
-        { "name":"Decrease Freq", "fun":heaper => changeFrequency(heaper,0.9*frequency) },
+        { "name":"Increase Freq", "fun":heaper => changeFrequency(heaper,1.1*heaper.instr.frequency) },
+        { "name":"Decrease Freq", "fun":heaper => changeFrequency(heaper,0.9*heaper.instr.frequency) },
         { "name":"zero", "fun": heaper => mulMem(heaper,0)},
         { "name":"inject some noise", "fun":heaper => noiseInjector(heaper,0.001)},
         { "name":"inject more noise", "fun":heaper => noiseInjector(heaper,0.01)},
         { "name":"inject much noise", "fun":heaper => noiseInjector(heaper,0.1)},
         { "name":"paste little", "fun": heaper => pasteRegion(heaper,10)},
         { "name":"paste lots", "fun": heaper => pasteRegion(heaper,100)},
+        { "name":"paste little repeat", "fun": heaper => pasteRepeatRegion(heaper,10)},
+        { "name":"paste lots repeat", "fun": heaper => pasteRepeatRegion(heaper,100)},
         { "name":"mean neighbor", "fun": meanNeighbor},
         { "name":"clamp 0.1", "fun": heaper => clamp(heaper,-0.1,0.1)},
         { "name":"clamp 0.5", "fun": heaper => clamp(heaper,-0.5,0.5)},
@@ -192,25 +221,20 @@ window.addEventListener("load", function() {
         var div = document.createElement("div")
         var buttons = document.createElement("div")
         funFunctions.forEach(function(e) {
-            let button = document.createElement("button")
+            var button = document.createElement("button")
             button.textContent = e.name
-            button.addEventListener("click", evt => e.fun(heaper))
+            button.addEventListener("click", function(evt) {  console.log(heaper); return e.fun(heaper) })            
             buttons.appendChild( button )
         })
         var frequencyDom = document.createElement("input")
-        frequencyDom.type = "slider"
+        frequencyDom.type = "range"
         frequencyDom.min = 1
         frequencyDom.max = 1000
         frequencyDom.step = 1        
         frequencyDom.value = heaper.frequency
-        changeFrequency = function(freq) {
-            heaper.frequency = parseFloat(freq)
-            frequencyDom.value = heaper.frequency
-            rhodes.frequency = frequency
-            console.log(frequency)
-        }
+        heaper.dom = frequencyDom
         frequencyDom.addEventListener("change", function(e) {
-            changeFrequency(this.value)
+            changeFrequency(heaper,frequencyDom.value)
         });
         div.appendChild(frequencyDom)
         div.appendChild(buttons)
