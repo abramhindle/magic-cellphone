@@ -25,128 +25,130 @@ html, body {
   </head>
     <body>
     <input type="range" id="frequency" min="1" step="1" max="1000"/>
-    <div id="buttons">
+    <div id="guis">
     </div>
     <script>
-    g = Gibberish.genish
 
-      
+g = Gibberish.genish
+Heaper = function(rhodes) {
+    var heap = Gibberish.memory.heap
+    this.instr = rhodes
+    this.mem = rhodes.graph.inputs[0].data.memory
+    let memory = this.mem
+    this.idx = memory.values.idx
+    this.len = memory.values.length
+    this.buffer = new Float32Array( this.len )
+    this.frequency = 440
+    this.blit = function() {
+        let idx = this.idx
+        let len = this.len
+        for ( var i = 0 ; i < len; i++ ) {
+            heap[idx + i] = this.buffer[i]
+        }
+    }
+}
+
+applyMem = function(heaper,f,start,range) {
+    let buffer = heaper.buffer
+    let len = heaper.len
+    var max = Math.min(len,start+range);
+    for( var i = Math.max(0,start); i < max; i++) {
+        buffer[i] = f(i,buffer[i])
+    }
+    heaper.blit()
+}
+mulMem = function(heaper,x) {
+    let heap = heaper.buffer
+    let len = heap.len    
+    for( var i = 0; i < len; i++) {
+        hea[i] *= x
+    }
+    heaper.blit()
+}
+addMem = function(heaper,x) {
+    let heap = heaper.buffer
+    let len = heap.len    
+    for( var i = 0; i < len; i++) {
+        heap[i] += x
+    }
+    heaper.blit()
+}
+quantize = function(heaper,n) {
+    applyMem(heaper,function(i,x) { return Math.round(x * n) / (1.0 * n)  },0,len);
+}
+identity = function(heaper) {
+    applyMem(heaper,function(i,x) { return x },0,len)
+}
+clamp = function(heaper,low,high) {
+    applyMem(heaper,function(i,x) { return Math.min(high,Math.max(low,x)) },0,len); 
+}
+noise = function(heaper,coef) {
+    applyMem(heaper,function(i,x) { return coef*Math.random() },0,len); 
+}
+zero = function(heaper) {
+    let heap = heaper.buffer
+    let len = heap.len    
+    for( var i = 0; i < len; i++) {
+        heap[i] = 0.0;
+    }
+    heaper.blit()
+}
+meanNeighbor = function(heaper) {
+    let heap = heaper.buffer
+    let len = heap.len    
+    for( var i = 1; i < len-1; i++) {
+        heap[i] = (heap[i - 1] + heap[i] + heap[i + 1])/3.0;
+    }
+    heaper.blit()
+}
+    
+noiseInjector = function(heaper,chance) {
+    let heap = heaper.buffer
+    let len = heap.len    
+    for( var i = 0; i < len; i++) {
+        if (Math.random() < chance) {
+            heap[i] = 2.0*Math.random() - 1.0;
+        }
+    }
+    heaper.blit()
+}
+    
+    
+pasteRegion = function(heaper,n) {
+    let heap = heaper.buffer
+    let len = heap.len    
+    var start = Math.round(Math.random()*len)
+    var newstart = Math.round(Math.random()*len)
+    for (var i = 0; i < n; i++) {
+     	if ((newstart + i) < len && (start + i) < len) {
+            heap[newstart + idx + i] = heap[start + idx + i] 
+        }
+    }
+    heaper.blit()
+}
+
+
+
 window.addEventListener("load", function() {
     console.log("onload");
     Gibberish.init();
     n = 1024
-    orig = new Float32Array( n )
-    rhodes = Wavetable({ frequency: 440, buffer: orig  })
-    rhodes.connect()
-    mem = rhodes.graph.inputs[0].data.memory
-    idx = mem.values.idx
-    len = mem.values.length
-    heap = Gibberish.memory.heap
+
+    heapers = [1,2,3,4,5].map( function(i) {    
+        var orig = new Float32Array( n )
+        var rhodes = Wavetable({ frequency: 440, buffer: orig  })
+        rhodes.connect()
+        return new Heaper(rhodes)
+    })
     console.log("ready");
-    
-    applyMem = function(f,start,range) {
-        var max = Math.min(len,start+range);
-        for( var i = Math.max(0,start); i < max; i++) {
-            heap[i + idx] = f(i,heap[i+idx])
-        }
-    }
-    
-    mulMem = function(x) {
-        for( var i = 0; i < len; i++) {
-            heap[i + idx] *= x
-        }
-    }
-    addMem = function(x) {
-        for( var i = 0; i < len; i++) {
-            heap[i + idx] += x
-        }
-    }
-    
-    restore = function() {
-        for( var i = 0; i < len; i++) {
-            heap[i + idx] = rhodes.data.buffer[i];
-        } 	 
-    }
-    
-    quantize = function(n) {
-        applyMem(function(i,x) { return Math.round(x * n) / (1.0 * n)  },0,len);
-    }
-    identity = function() {
- 	applyMem(function(i,x) { return x },0,len)
-    }
-    clamp = function(low,high) {
-        applyMem(function(i,x) { return Math.min(high,Math.max(low,x)) },0,len); 
-    }
-    noise = function(coef) {
-        applyMem(function(i,x) { return coef*Math.random() },0,len); 
-    }
-    
-    restore = function() {
-        for( var i = 0; i < len; i++) {
-            heap[i + idx] = orig[i];
-        } 	 
-    }
-    zero = function() {
-        for( var i = 0; i < len; i++) {
-            heap[i + idx] = 0.0;
-        } 	 
-    }
-
-    
-    quantize = function(n) {
-        applyMem(function(i,x) { return Math.round(x * n) / (1.0 * n)  },0,len);
-    }
-    identity = function() {
- 	applyMem(function(i,x) { return x },0,len)
-    }
-    clamp = function(low,high) {
-        applyMem(function(i,x) { return Math.min(high,Math.max(low,x)) },0,len);     }
-    
-    meanNeighbor = function() {
-        for( var i = 1; i < len-1; i++) {
-            heap[i + idx] = (heap[i + idx - 1] + heap[i + idx] + heap[i + idx + 1])/3.0;
-        }
-    }
-    
-    noiseInjector = function(chance) {
-        for( var i = 0; i < len; i++) {
-            if (Math.random() < chance) {
-                heap[i + idx] = 2.0*Math.random() - 1.0;
-            }
-        }
-    }
+    console.log(heapers);
     
     
-    pasteRegion = function(n) {
-        var start = Math.round(Math.random()*len)
-        var newstart = Math.round(Math.random()*len)
-        for (var i = 0; i < n; i++) {
-     	    if ((newstart + i) < len && (start + i) < len) {
-                heap[newstart + idx + i] = heap[start + idx + i] 
-            }
-        }
-    }
-
-    
-    var frequencyDom = document.getElementById("frequency")
-    var frequency = 440
-    frequencyDom.value = frequency
-    changeFrequency = function(freq) {
-        frequency = parseFloat(freq)
-        frequencyDom.value = frequency
-        rhodes.frequency = frequency
-        console.log(frequency)
-    }
-
-    frequencyDom.addEventListener("change", function(e) {
-        changeFrequency(this.value)
-    });
-
     var decayerInterval = null
-    decayer = function(decay) {
+    decayer = function(heaper,decay) {
         if (decayerInterval === null) {
             decayerInterval = setInterval(function() {
-                mulMem(decay)
+                mulMem(heaper,decay)
             },100);
         } else {
             clearInterval(decayerInterval);
@@ -155,46 +157,70 @@ window.addEventListener("load", function() {
     }
     
     funFunctions = [
-        { "name":"low Freq", "fun":() => changeFrequency(20) },
-        { "name":"Increase Freq", "fun":() => changeFrequency(1.1*frequency) },
-        { "name":"Decrease Freq", "fun":() => changeFrequency(0.9*frequency) },
-        { "name":"restore", "fun":() => restore() },
-        { "name":"zero", "fun": () => mulMem(0)},
-        { "name":"inject some noise", "fun":() => noiseInjector(0.001)},
-        { "name":"inject more noise", "fun":() => noiseInjector(0.01)},
-        { "name":"inject much noise", "fun":() => noiseInjector(0.1)},
-        { "name":"paste little", "fun": () => pasteRegion(10)},
-        { "name":"paste lots", "fun": () => pasteRegion(100)},
+        { "name":"low Freq", "fun":heaper => changeFrequency(heaper,20) },
+        { "name":"Increase Freq", "fun":heaper => changeFrequency(heaper,1.1*frequency) },
+        { "name":"Decrease Freq", "fun":heaper => changeFrequency(heaper,0.9*frequency) },
+        { "name":"zero", "fun": heaper => mulMem(heaper,0)},
+        { "name":"inject some noise", "fun":heaper => noiseInjector(heaper,0.001)},
+        { "name":"inject more noise", "fun":heaper => noiseInjector(heaper,0.01)},
+        { "name":"inject much noise", "fun":heaper => noiseInjector(heaper,0.1)},
+        { "name":"paste little", "fun": heaper => pasteRegion(heaper,10)},
+        { "name":"paste lots", "fun": heaper => pasteRegion(heaper,100)},
         { "name":"mean neighbor", "fun": meanNeighbor},
-        { "name":"clamp 0.1", "fun": () => clamp(-0.1,0.1)},
-        { "name":"clamp 0.5", "fun": () => clamp(-0.5,0.5)},
-        { "name":"* 0.5", "fun": () => mulMem(0.5)},
-        { "name":"* 2", "fun": () => mulMem(2.0)},
-        { "name":"+ 0.1", "fun": () => addMem(0.1)},
-        { "name":"- 0.1", "fun": () => addMem(-0.1)}, 
-        { "name":"+ 0.5", "fun": () => addMem(0.5)},
-        { "name":"- 0.5", "fun": () => addMem(-0.5)},
-        { "name":"Quantize 1024", "fun": () => quantize(1024)},
-        { "name":"Quantize 256", "fun": () => quantize(256)},
-        { "name":"Quantize 64", "fun": () => quantize(64)},
-        { "name":"Quantize 16", "fun": () => quantize(16)},
-        { "name":"Quantize 4", "fun": () => quantize(4)},
-        { "name":"Quantize 2", "fun": () => quantize(2)},
-        { "name":"Low Noise", "fun": () => noise(0.01)},
-        { "name":"Med Noise", "fun": () => noise(0.1)},
-        { "name":"High Noise", "fun": () => noise(0.9)},
-        { "name":"Slow Decayer", "fun": () => decayer(0.999)},
-        { "name":"Fast Decayer", "fun": () => decayer(0.99)},
+        { "name":"clamp 0.1", "fun": heaper => clamp(heaper,-0.1,0.1)},
+        { "name":"clamp 0.5", "fun": heaper => clamp(heaper,-0.5,0.5)},
+        { "name":"* 0.5", "fun": heaper => mulMem(heaper,0.5)},
+        { "name":"* 2", "fun": heaper => mulMem(heaper,2.0)},
+        { "name":"+ 0.1", "fun": heaper => addMem(heaper,0.1)},
+        { "name":"- 0.1", "fun": heaper => addMem(heaper,-0.1)}, 
+        { "name":"+ 0.5", "fun": heaper => addMem(heaper,0.5)},
+        { "name":"- 0.5", "fun": heaper => addMem(heaper,-0.5)},
+        { "name":"Quantize 1024", "fun": heaper => quantize(heaper,1024)},
+        { "name":"Quantize 256", "fun": heaper => quantize(heaper,256)},
+        { "name":"Quantize 64", "fun": heaper => quantize(heaper,64)},
+        { "name":"Quantize 16", "fun": heaper => quantize(heaper,16)},
+        { "name":"Quantize 4", "fun": heaper => quantize(heaper,4)},
+        { "name":"Quantize 2", "fun": heaper => quantize(heaper,2)},
+        { "name":"Low Noise", "fun": heaper => noise(heaper,0.01)},
+        { "name":"Med Noise", "fun": heaper => noise(heaper,0.1)},
+        { "name":"High Noise", "fun": heaper => noise(heaper,0.9)},
+        { "name":"Slow Decayer", "fun": heaper => decayer(heaper,0.999)},
+        { "name":"Fast Decayer", "fun": heaper => decayer(heaper,0.99)},
     ]
-    buttons = document.getElementById("buttons")
-    funFunctions.forEach(function(e) {
-        let button = document.createElement("button")
-        button.textContent = e.name
-        button.addEventListener("click", evt => e.fun())
-        buttons.appendChild( button )
+    
+    function mkHeaperGUI(heaper) {
+        var div = document.createElement("div")
+        var buttons = document.createElement("div")
+        funFunctions.forEach(function(e) {
+            let button = document.createElement("button")
+            button.textContent = e.name
+            button.addEventListener("click", evt => e.fun(heaper))
+            buttons.appendChild( button )
+        })
+        var frequencyDom = document.createElement("input")
+        frequencyDom.type = "slider"
+        frequencyDom.min = 1
+        frequencyDom.max = 1000
+        frequencyDom.step = 1        
+        frequencyDom.value = heaper.frequency
+        changeFrequency = function(freq) {
+            heaper.frequency = parseFloat(freq)
+            frequencyDom.value = heaper.frequency
+            rhodes.frequency = frequency
+            console.log(frequency)
+        }
+        frequencyDom.addEventListener("change", function(e) {
+            changeFrequency(this.value)
+        });
+        div.appendChild(frequencyDom)
+        div.appendChild(buttons)
+        return div
+    }
+    
+    guis = heapers.map( heaper => mkHeaperGUI(heaper) )
+    guis.map( function(gui) {
+        document.getElementById("guis").appendChild(gui)
     })
-
-
     
     
 });
