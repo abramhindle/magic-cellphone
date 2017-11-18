@@ -1,0 +1,205 @@
+
+<!doctype html>
+<html>
+  <head>
+    <title>Magic!</title>
+    <style>
+#multibuttonpanel {
+        width: 100%;
+       height: 25%;
+}
+#sliderpanel {
+        width: 100%;
+       height: 75%;
+}
+
+
+html, body {
+   height: 100%;
+   width: 100%;
+   margin: 0;
+   padding: 0;
+}
+</style>
+    <script src="./gibberish3.js"></script>
+  </head>
+    <body>
+    <input type="range" id="frequency" min="1" step="1" max="1000"/>
+    <div id="buttons">
+    </div>
+    <script>
+    g = Gibberish.genish
+
+      
+window.addEventListener("load", function() {
+    console.log("onload");
+    Gibberish.init();
+    n = 1024
+    orig = new Float32Array( n )
+    rhodes = Wavetable({ frequency: 440, buffer: orig  })
+    rhodes.connect()
+    mem = rhodes.graph.inputs[0].data.memory
+    idx = mem.values.idx
+    len = mem.values.length
+    heap = Gibberish.memory.heap
+    console.log("ready");
+    
+    applyMem = function(f,start,range) {
+        var max = Math.min(len,start+range);
+        for( var i = Math.max(0,start); i < max; i++) {
+            heap[i + idx] = f(i,heap[i+idx])
+        }
+    }
+    
+    mulMem = function(x) {
+        for( var i = 0; i < len; i++) {
+            heap[i + idx] *= x
+        }
+    }
+    addMem = function(x) {
+        for( var i = 0; i < len; i++) {
+            heap[i + idx] += x
+        }
+    }
+    
+    restore = function() {
+        for( var i = 0; i < len; i++) {
+            heap[i + idx] = rhodes.data.buffer[i];
+        } 	 
+    }
+    
+    quantize = function(n) {
+        applyMem(function(i,x) { return Math.round(x * n) / (1.0 * n)  },0,len);
+    }
+    identity = function() {
+ 	applyMem(function(i,x) { return x },0,len)
+    }
+    clamp = function(low,high) {
+        applyMem(function(i,x) { return Math.min(high,Math.max(low,x)) },0,len); 
+    }
+    noise = function(coef) {
+        applyMem(function(i,x) { return coef*Math.random() },0,len); 
+    }
+    
+    restore = function() {
+        for( var i = 0; i < len; i++) {
+            heap[i + idx] = orig[i];
+        } 	 
+    }
+    zero = function() {
+        for( var i = 0; i < len; i++) {
+            heap[i + idx] = 0.0;
+        } 	 
+    }
+
+    
+    quantize = function(n) {
+        applyMem(function(i,x) { return Math.round(x * n) / (1.0 * n)  },0,len);
+    }
+    identity = function() {
+ 	applyMem(function(i,x) { return x },0,len)
+    }
+    clamp = function(low,high) {
+        applyMem(function(i,x) { return Math.min(high,Math.max(low,x)) },0,len);     }
+    
+    meanNeighbor = function() {
+        for( var i = 1; i < len-1; i++) {
+            heap[i + idx] = (heap[i + idx - 1] + heap[i + idx] + heap[i + idx + 1])/3.0;
+        }
+    }
+    
+    noiseInjector = function(chance) {
+        for( var i = 0; i < len; i++) {
+            if (Math.random() < chance) {
+                heap[i + idx] = 2.0*Math.random() - 1.0;
+            }
+        }
+    }
+    
+    
+    pasteRegion = function(n) {
+        var start = Math.round(Math.random()*len)
+        var newstart = Math.round(Math.random()*len)
+        for (var i = 0; i < n; i++) {
+     	    if ((newstart + i) < len && (start + i) < len) {
+                heap[newstart + idx + i] = heap[start + idx + i] 
+            }
+        }
+    }
+
+    
+    var frequencyDom = document.getElementById("frequency")
+    var frequency = 440
+    frequencyDom.value = frequency
+    changeFrequency = function(freq) {
+        frequency = parseFloat(freq)
+        frequencyDom.value = frequency
+        rhodes.frequency = frequency
+        console.log(frequency)
+    }
+
+    frequencyDom.addEventListener("change", function(e) {
+        changeFrequency(this.value)
+    });
+
+    var decayerInterval = null
+    decayer = function(decay) {
+        if (decayerInterval === null) {
+            decayerInterval = setInterval(function() {
+                mulMem(decay)
+            },100);
+        } else {
+            clearInterval(decayerInterval);
+            decayerInterval = null
+        }
+    }
+    
+    funFunctions = [
+        { "name":"low Freq", "fun":() => changeFrequency(20) },
+        { "name":"Increase Freq", "fun":() => changeFrequency(1.1*frequency) },
+        { "name":"Decrease Freq", "fun":() => changeFrequency(0.9*frequency) },
+        { "name":"restore", "fun":() => restore() },
+        { "name":"zero", "fun": () => mulMem(0)},
+        { "name":"inject some noise", "fun":() => noiseInjector(0.001)},
+        { "name":"inject more noise", "fun":() => noiseInjector(0.01)},
+        { "name":"inject much noise", "fun":() => noiseInjector(0.1)},
+        { "name":"paste little", "fun": () => pasteRegion(10)},
+        { "name":"paste lots", "fun": () => pasteRegion(100)},
+        { "name":"mean neighbor", "fun": meanNeighbor},
+        { "name":"clamp 0.1", "fun": () => clamp(-0.1,0.1)},
+        { "name":"clamp 0.5", "fun": () => clamp(-0.5,0.5)},
+        { "name":"* 0.5", "fun": () => mulMem(0.5)},
+        { "name":"* 2", "fun": () => mulMem(2.0)},
+        { "name":"+ 0.1", "fun": () => addMem(0.1)},
+        { "name":"- 0.1", "fun": () => addMem(-0.1)}, 
+        { "name":"+ 0.5", "fun": () => addMem(0.5)},
+        { "name":"- 0.5", "fun": () => addMem(-0.5)},
+        { "name":"Quantize 1024", "fun": () => quantize(1024)},
+        { "name":"Quantize 256", "fun": () => quantize(256)},
+        { "name":"Quantize 64", "fun": () => quantize(64)},
+        { "name":"Quantize 16", "fun": () => quantize(16)},
+        { "name":"Quantize 4", "fun": () => quantize(4)},
+        { "name":"Quantize 2", "fun": () => quantize(2)},
+        { "name":"Low Noise", "fun": () => noise(0.01)},
+        { "name":"Med Noise", "fun": () => noise(0.1)},
+        { "name":"High Noise", "fun": () => noise(0.9)},
+        { "name":"Slow Decayer", "fun": () => decayer(0.999)},
+        { "name":"Fast Decayer", "fun": () => decayer(0.99)},
+    ]
+    buttons = document.getElementById("buttons")
+    funFunctions.forEach(function(e) {
+        let button = document.createElement("button")
+        button.textContent = e.name
+        button.addEventListener("click", evt => e.fun())
+        buttons.appendChild( button )
+    })
+
+
+    
+    
+});
+    
+    </script>
+  </body>
+</html>
+
