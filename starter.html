@@ -2,6 +2,8 @@
 <html>
   <head>
     <title>Starter</title>
+    <link rel="manifest" href="/manifest.json">
+    <meta charset="UTF-8">        
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <meta name="apple-mobile-web-app-title" content="Magic Cellphone">
@@ -44,9 +46,11 @@
     <div>
         Playing a test chord
     </div>
-    <div id="clickit">
+    <a id="next" href="./1.html?action=perform&time=120">
+      <div id="clickit">
         <a id="next" href="./1.html?action=perform&time=120">Click Here to Start</a>
-    </div>
+      </div>
+    </a>
     
     <script>
 
@@ -78,6 +82,15 @@ window.addEventListener("load", function() {
    
    
 });
+
+if('serviceWorker' in navigator) {
+  navigator.serviceWorker
+           .register('/sw.js')
+           .then(function() { console.log("Service Worker Registered"); });
+} else {
+    console.log("No serviceWorker");
+}
+
 
 </script>
     

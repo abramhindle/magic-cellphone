@@ -2,6 +2,8 @@
 <html>
   <head>
     <title>Ending</title>
+    <link rel="manifest" href="/manifest.json">
+    <meta charset="UTF-8">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <meta name="apple-mobile-web-app-title" content="Magic Cellphone">
@@ -39,9 +41,17 @@
     <div>
     Ending, 30 seconds of fade out
     </div>
-    <div>
-        <a href="./1.html?action=perform&time=60&next=./2.html">Click Here to Start</a>
-    </div>
+      <a href="./1.html?action=perform&time=60&next=./2.html">
+        <div class="button">
+          Click Here to Start
+        </div>
+      </a>
+      <a href="./starter.html">
+        <div class="button">
+          Starter!
+        </div>
+      </a>
+
     
     <script>
 
@@ -67,7 +77,63 @@ window.addEventListener("load", function() {
         1000);
 });
 
+if('serviceWorker' in navigator) {
+  navigator.serviceWorker
+           .register('/sw.js')
+           .then(function() { console.log("Service Worker Registered"); });
+} else {
+    console.log("No serviceWorker");
+}
+
+
 </script>
-    
+
+
+<style>
+.button {
+    display: inline-block;
+    width: 30%;
+    color: black;
+    padding: 0.4em;
+    background-color: white;
+    border-color: black;
+    border-style: solid;
+}
+.grey {
+    background-color: grey;
+}
+</style>
+
+
+
+
+<div width="100%">
+	<a href="./1.html">
+		<div class="button">
+			Ocean
+		</div>
+	</a>
+	<a href="./2.html">
+		<div class="button grey">
+			Delay
+		</div>
+	</a>
+	<a href="./3.html">
+		<div class="button">
+			Plates
+		</div>
+	</a>
+	<a href="./4.html">
+		<div class="button grey">
+			PolyFM
+		</div>
+	</a>
+	<a href="./5.html">
+		<div class="button">
+			Ending
+		</div>
+	</a>
+</div>
+
   </body>
 </html>

@@ -833,7 +833,7 @@ window.onload = function() {
         // Create the audio graph.
     //looper.connect(filter);
     looper.connect(audioContext.destination);
-    //filter.connect(audioContext.destination);
+    filter.connect(audioContext.destination);
         // Create and specify parameters for the low-pass filter.
         // Playback the sound.
         //source.start(0);

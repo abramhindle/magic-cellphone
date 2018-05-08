@@ -24,9 +24,18 @@ self.addEventListener('install', function(e) {
          '/sw.js',
          '/buttons.html',
          '/index.html',
+         '/starter.html',
+         '/1.html',
+         '/2.html',
+         '/3.html',
+         '/4.html',
+         '/5.html',
          '/favicon.ico',
-         '/www.charlie-roberts.com/gibberish/build/gibberish.js',
-         '/www.charlie-roberts.com/interface/build/interface.js',
+         '/performance.js',
+         '/gibberish3.js',
+         '/gibberish3-c.js',
+//         '/www.charlie-roberts.com/gibberish/build/gibberish.js',
+//         '/www.charlie-roberts.com/interface/build/interface.js',
      ]);
    })
  );
