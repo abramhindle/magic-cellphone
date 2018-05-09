@@ -17,8 +17,8 @@ body {
         background: black;
 }
 #canvas {
-        width: 100%;
-        height: 100%;
+        width:  640px;
+        height: 480px;
 }
 #runsum {
     color: white;
@@ -103,10 +103,10 @@ function startFrameDifferencer(video) {
     var currentContext = currentFrame.getContext('2d');
     var lastContext = lastFrame.getContext('2d');
     dinterval = window.setInterval(function() {
-        currentContext.drawImage(video,0,0,320,240);
-        var outpix = context.getImageData(0,0,320,240);
-        var current = currentContext.getImageData(0,0,320,240);
-        var last    = lastContext.getImageData(0,0,320,240);
+        currentContext.drawImage(video,0,0,width,height);
+        var outpix = context.getImageData(0,0,width,height);
+        var current = currentContext.getImageData(0,0,width,height);
+        var last    = lastContext.getImageData(0,0,width,height);
         var cd = current.data;
         var ld = last.data;
         var od = outpix.data;
