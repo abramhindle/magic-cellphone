@@ -30,6 +30,7 @@ self.addEventListener('install', function(e) {
          '/3.html',
          '/4.html',
          '/5.html',
+         '/6.html',
          '/1.html?action=perform&time=120',
          '/2.html?action=perform&time=120',
          '/3.html?action=perform&time=120',
