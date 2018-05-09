@@ -39,6 +39,7 @@ self.addEventListener('install', function(e) {
          '/favicon.ico',
          '/performance.js',
          '/gibberish3-c.js',
+         '/gibberish3.latest.js',
 //         '/www.charlie-roberts.com/gibberish/build/gibberish.js',
 //         '/www.charlie-roberts.com/interface/build/interface.js',
      ]);
