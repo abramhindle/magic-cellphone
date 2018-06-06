@@ -1,0 +1,149 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Recurse</title>
+    <meta charset="UTF-8">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="Magic Cellphone">
+    <meta name="msapplication-TileImage" content="128x128.png">
+    <meta name="msapplication-TileColor" content="#2F3BA2">
+
+    <link rel="apple-touch-icon" href="128x128.png">
+
+    <style>
+      body {
+        width: 100%;
+        height: 100%;
+        background: blue;
+      }
+      #canvas {
+          width: 1920px;
+          height: 1080px;
+      }
+      #bigdiv {
+          width: 100%;
+          height: 100%;
+      }
+      
+      #runsum {
+          color: white;
+          position: absolute;
+      }
+      #sensitivity {
+          position: absolute;
+      }
+      
+      </style>
+    <!-- <script src="./gibberish3-c.js"></script>-->
+    <!--
+      <script src="./gibberish3.latest.js"></script>
+      <script src="./performance.js"></script>
+    -->
+  </head>
+    <body>
+    <div id="bigdiv">
+      <canvas id="canvas">
+      </canvas>
+    </div>
+    <div>
+    <img id="init" src="explosion.png"/>
+    <img id="noise" src="overlay-noise.png"/>
+   </div>
+    <script>
+
+var width = 1920;
+var height = 1080;
+var dinterval;
+
+var workFrame = document.createElement("canvas");
+var lastFrame = document.createElement("canvas");
+var canvas = document.querySelector('#canvas');
+canvas.width  = workFrame.width  = lastFrame.width  = width;
+canvas.height = workFrame.height = lastFrame.height = height;
+
+
+function processFrame() {
+    // just for display
+    var canvas = document.querySelector('#canvas');
+    var init = document.querySelector('#init');
+    var noise = document.querySelector('#noise');
+    var first = true;
+    var t = 0;
+    dinterval = window.setInterval(function() {
+        t++;
+        var outContext  = canvas.getContext('2d');
+        var workContext = workFrame.getContext('2d');
+        var lastContext = lastFrame.getContext('2d');
+        if (first) {
+            first = false;
+            lastContext.globalCompositeOperation = "copy"; //source-over
+            lastContext.drawImage(init,0,0,width,height);            
+        }
+        // lastFrame + init
+        workContext.globalCompositeOperation = "copy"; //source-over
+        workContext.fillStyle = "rgb(0, 0, 0)";
+        workContext.fillRect(0, 0, width, height);
+        workContext.globalCompositeOperation = "difference"; //source-over
+        // workContext.globalCompositeOperation = "difference"; //source-over
+        //workContext.save();
+        //workContext.translate(width/2, height/2);
+        //workContext.rotate(90.0*Math.sin(0.01*t/Math.PI)*Math.PI/180);
+        //workContext.translate(-width/2, -height/2);
+        workContext.drawImage(init,100*Math.sin(0.01*t/3.14)+5*Math.sin(t/3.14),200*Math.sin(0.1*t/3.14),width,height);
+        //workContext.drawImage(init,100*Math.sin(0.01*t/3.14)+5*Math.sin(t/3.14),100*Math.sin(0.1*t/3.14),width,height);
+        //workContext.restore();
+        //        workContext.drawImage(init,0,0,width,height);
+
+        //workContext.fillStyle = "rgba(0, 0, 0,0.01)";
+        //workContext.fillRect(0, 0, width, height);
+        //workContext.globalCompositeOperation = "source-over"; //source-over
+        workContext.globalCompositeOperation = "multiply"; //source-over
+        //workContext.globalCompositeOperation = "lighter"; //source-over
+        workContext.drawImage(noise,0,0,width,height);
+        
+        var scalex = 0.99;
+        var scaley = 1.25;
+        var rot = 5.3;
+        workContext.save();
+        workContext.translate(width/2, height/2);
+        workContext.rotate(rot*Math.PI/180);
+        workContext.translate(-width/2, -height/2);
+        workContext.translate(width/2, height/2);
+        workContext.scale(scalex,scaley);        
+        workContext.translate(-width/2, -height/2);
+
+        workContext.globalCompositeOperation = "difference"; //source-over        
+        //workContext.fillStyle = "rgba(0, 0, 0, 0.1)";
+        //workContext.fillRect(0, 0, width, height);
+        //workContext.drawImage(lastFrame,100*Math.sin(0.01*t/3.14)+5*Math.sin(t/3.14),200*Math.sin(0.1*t/3.14),width,height);
+        workContext.drawImage(lastFrame,0,0);
+        //workContext.drawImage(lastFrame,0,0,width,height);
+        //lastContext.resetTransform();
+        workContext.restore();
+        
+        //workContext.globalCompositeOperation = "color"; //source-over        
+        //workContext.drawImage(init,0,0,width,height);
+
+        // normal copy
+        // copy workFrame to display
+        outContext.globalCompositeOperation = "copy";
+        outContext.drawImage(workFrame,0,0,width,height);
+        // copy workFrame to lastFrame
+        lastContext.globalCompositeOperation = "copy";
+        lastContext.drawImage(workFrame,0,0,width,height);
+        console.log("We're good");
+    },1000/30.0);
+}
+
+
+window.addEventListener("load", function() {
+    console.log("onload");
+    processFrame();
+});
+
+</script>
+
+    
+  </body>
+</html>
