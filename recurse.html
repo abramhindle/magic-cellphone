@@ -12,6 +12,9 @@
     <link rel="apple-touch-icon" href="128x128.png">
 
     <style>
+      #hide {
+          display: none;
+      }
       body {
         width: 100%;
         height: 100%;
@@ -46,8 +49,8 @@
       <canvas id="canvas">
       </canvas>
     </div>
-    <div>
-    <img id="init" src="explosion.png"/>
+    <div id="hide">
+    <img id="init" src="sphere.png"/>
     <img id="noise" src="overlay-noise.png"/>
    </div>
     <script>
@@ -62,6 +65,59 @@ var canvas = document.querySelector('#canvas');
 canvas.width  = workFrame.width  = lastFrame.width  = width;
 canvas.height = workFrame.height = lastFrame.height = height;
 
+var composites = ["lighter","multiply","difference","source-over"];
+function getComposite(x) {
+    return composites[ x % composites.length ];
+}
+function generateCompositeRandomizer() {
+    return function() {
+        return Math.floor(Math.random() * composites.length);
+    };
+}
+function generateRandomizer(low,hi) {
+    return function() { return (hi - low) * Math.random + low; }
+}
+randomizer = {
+    initc: generateCompositeRandomizer(),
+    noisec: generateCompositeRandomizer(),
+    lfc: generateCompositeRandomizer(),
+    sx: generateRandomizer(0.98,2.0),
+    sy:  generateRandomizer(0.98,2.0),
+    dim: generateRandomizer(0.0,1.0),
+    rot: generateRandomizer(0.0001,120.0)
+};
+var safeRandos = ["sx","sy","rot","dim","initc","noisec","lfc"];
+params = {
+    initc: 0,
+    noisec: 0,
+    lfc: 2,
+    dim: 0.1,
+    sx: 1.2,
+    sy: 1.1,
+    rot: -2.21,
+    rand: function() {
+        var l = safeRandos;
+        for (var index in l) {
+            var x = l[index];
+            if (x in randomizer) {
+                params[x] = randomizer[x]();
+            } else {
+                console.log("Why isn't " + x + " in randomizer?");
+            }
+        }
+    },
+    "1r": function() {
+        var l = safeRandos;
+        index = Math.floor(Math.random() * l.length);
+        var x = l[index];
+        if (x in randomizer) {
+            params[x] = randomizer[x]();
+        } else {
+            console.log("Why isn't " + x + " in randomizer?");
+        }
+    }
+
+};
 
 function processFrame() {
     // just for display
@@ -81,30 +137,32 @@ function processFrame() {
             lastContext.drawImage(init,0,0,width,height);            
         }
         // lastFrame + init
-        workContext.globalCompositeOperation = "copy"; //source-over
-        workContext.fillStyle = "rgb(0, 0, 0)";
-        workContext.fillRect(0, 0, width, height);
-        workContext.globalCompositeOperation = "difference"; //source-over
+        //workContext.fillStyle = "rgb(0, 0, 0)";
+        //workContext.fillRect(0, 0, width, height);
+        workContext.globalCompositeOperation = getComposite(params["initc"]); //source-over
         // workContext.globalCompositeOperation = "difference"; //source-over
         //workContext.save();
         //workContext.translate(width/2, height/2);
         //workContext.rotate(90.0*Math.sin(0.01*t/Math.PI)*Math.PI/180);
         //workContext.translate(-width/2, -height/2);
-        workContext.drawImage(init,100*Math.sin(0.01*t/3.14)+5*Math.sin(t/3.14),200*Math.sin(0.1*t/3.14),width,height);
-        //workContext.drawImage(init,100*Math.sin(0.01*t/3.14)+5*Math.sin(t/3.14),100*Math.sin(0.1*t/3.14),width,height);
+        //workContext.drawImage(init,100*Math.sin(0.01*t/3.14)+5*Math.sin(t/3.14),200*Math.sin(0.1*t/3.14),width,height);
+        init.filter = 'opacity(0.5)';
+        workContext.drawImage(init,100*Math.sin(0.01*t/3.14)+5*Math.sin(t/3.14),100*Math.sin(0.1*t/3.14),width,height);
+        //workContext.drawImage(init,0,0,width,height);
         //workContext.restore();
-        //        workContext.drawImage(init,0,0,width,height);
 
+        //        workContext.drawImage(init,0,0,width,height);
         //workContext.fillStyle = "rgba(0, 0, 0,0.01)";
         //workContext.fillRect(0, 0, width, height);
         //workContext.globalCompositeOperation = "source-over"; //source-over
-        workContext.globalCompositeOperation = "multiply"; //source-over
+        //workContext.globalCompositeOperation = "color-burn"; //source-over
         //workContext.globalCompositeOperation = "lighter"; //source-over
+        workContext.globalCompositeOperation = getComposite(params["noisec"]); //"multiply"; //source-over
         workContext.drawImage(noise,0,0,width,height);
         
-        var scalex = 0.99;
-        var scaley = 1.25;
-        var rot = 5.3;
+        var scalex = params["sx"] + 0.1*Math.sin(0.01*t);
+        var scaley = params["sy"] + 0.1*Math.sin(0.01*t);
+        var rot = params["rot"] + 2*Math.sin(0.01*t);
         workContext.save();
         workContext.translate(width/2, height/2);
         workContext.rotate(rot*Math.PI/180);
@@ -113,14 +171,27 @@ function processFrame() {
         workContext.scale(scalex,scaley);        
         workContext.translate(-width/2, -height/2);
 
-        workContext.globalCompositeOperation = "difference"; //source-over        
-        //workContext.fillStyle = "rgba(0, 0, 0, 0.1)";
-        //workContext.fillRect(0, 0, width, height);
+        workContext.globalCompositeOperation = getComposite(params["lfc"]); //source-over        
         //workContext.drawImage(lastFrame,100*Math.sin(0.01*t/3.14)+5*Math.sin(t/3.14),200*Math.sin(0.1*t/3.14),width,height);
         workContext.drawImage(lastFrame,0,0);
+
+        
         //workContext.drawImage(lastFrame,0,0,width,height);
         //lastContext.resetTransform();
         workContext.restore();
+
+        workContext.fillStyle = "rgb(0, 0, 0, " + params["dim"] + ")";
+        workContext.fillRect(0, 0, width, height);
+
+
+        //workContext.globalCompositeOperation = "difference"; //source-over
+        // workContext.globalCompositeOperation = "difference"; //source-over
+        //workContext.save();
+        //workContext.translate(width/2, height/2);
+        //workContext.rotate(90.0*Math.sin(0.01*t/Math.PI)*Math.PI/180);
+        //workContext.translate(-width/2, -height/2);
+        //workContext.drawImage(init,100*Math.sin(0.01*t/3.14)+5*Math.sin(t/3.14),200*Math.sin(0.1*t/3.14),width,height);
+
         
         //workContext.globalCompositeOperation = "color"; //source-over        
         //workContext.drawImage(init,0,0,width,height);
@@ -132,11 +203,77 @@ function processFrame() {
         // copy workFrame to lastFrame
         lastContext.globalCompositeOperation = "copy";
         lastContext.drawImage(workFrame,0,0,width,height);
-        console.log("We're good");
-    },1000/30.0);
+    },1000/24.0);
 }
+var currStr = "";
+var lastStr = "";
 
+var unaries = {
+    "++": function(x,old) { params[x] = old + 1},
+    "--": function(x,old) { params[x] = old - 1}
+};
+var binaries = {
+    "=": function(x,old,a) { params[x] = parseFloat(a) }
+};
+function submitString(command) {
+    var commands = command.split(" ");
+    console.log(commands);
+    if (commands[0] in params) {
+        var theCommand = commands[0]
+        param = params[theCommand];
+        if (param instanceof Function) {
+            console.log("calling function "+ param);
+            param.apply(null, commands.slice(1))
+        } else {
+            // set
+            var op = commands[1];
+            if (op in unaries) {
+                console.log("calling unary: "+op);
+                unaries[op](theCommand,param);                
+            } else  if (op in binaries) {
+                console.log("calling binary: " + op);
+                binaries[op](theCommand,param,commands[2]);
+            } else {
+                console.log("Why are we here " + commands);
+            }
+        }
+    }
+}
+dontPrevent = {
+    "F11":true
+}
+/*
+window.addEventListener("keyup", function(e) {
+        e.preventDefault();
+});
+window.addEventListener("keydown", function(e) {
+    e.preventDefault();
+});*/
+window.addEventListener("keypress", function(e) {
+    var character = e.key;
+    console.log(character);   
+    if (character == 'Enter') {
+        console.log(currStr);
+        submitString(currStr);
+        lastStr = currStr;
+        currStr = "";
+    } else if (character == 'ArrowUp') {
+        console.log('repeat');
+        submitString(lastStr);
+    } else if (character == 'ArrowDown') {
+        submitString('rand');
+    } else if (character == 'ArrowRight') {
+        submitString('1r');
+    } else {
+        currStr += character;
+    }
+    if (character in dontPrevent) {
 
+    } else {
+        e.preventDefault();
+    }
+    return 1;
+}); 
 window.addEventListener("load", function() {
     console.log("onload");
     processFrame();
