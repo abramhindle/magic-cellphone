@@ -16,9 +16,10 @@
           display: none;
       }
       body {
-        width: 100%;
-        height: 100%;
-        background: blue;
+          width: 100%;
+          height: 100%;
+          background: black;
+          padding: 0px;
       }
       #canvas {
           width: 1920px;
@@ -27,6 +28,7 @@
       #bigdiv {
           width: 100%;
           height: 100%;
+          padding: 0px;
       }
       
       #runsum {
@@ -66,34 +68,62 @@ canvas.width  = workFrame.width  = lastFrame.width  = width;
 canvas.height = workFrame.height = lastFrame.height = height;
 
 var composites = ["lighter","multiply","difference","source-over"];
+var images = ["lava.png","qbist.png","recurse-init.png","sphere.png",
+              "explosion.png","mess.png","qbist2.png","recurse-init2.png",
+              "i-explosion.png","overlay-noise.png","qbist3.png","rgb-noise.png"];
+
+    
 function getComposite(x) {
     return composites[ x % composites.length ];
 }
+function getImage(x) {
+    return images[ x % images.length ];
+}
+
 function generateCompositeRandomizer() {
     return function() {
         return Math.floor(Math.random() * composites.length);
     };
 }
+function generateImageRandomizer() {
+    return function() {
+        return Math.floor(Math.random() * images.length);
+    };
+}
 function generateRandomizer(low,hi) {
-    return function() { return (hi - low) * Math.random + low; }
+    return function() { return (hi - low) * Math.random() + low; }
 }
 randomizer = {
+    init: generateImageRandomizer(),
+    noise: generateImageRandomizer(),
     initc: generateCompositeRandomizer(),
     noisec: generateCompositeRandomizer(),
     lfc: generateCompositeRandomizer(),
     sx: generateRandomizer(0.98,2.0),
     sy:  generateRandomizer(0.98,2.0),
+    ix: generateRandomizer(0.0,200.0),
+    iy:  generateRandomizer(0.0,200.0),
+    ixf: generateRandomizer(0.0,1.0),
+    iyf:  generateRandomizer(0.0,1.0),
     dim: generateRandomizer(0.0,1.0),
+    opacity: generateRandomizer(0.0,1.0),    
     rot: generateRandomizer(0.0001,120.0)
 };
-var safeRandos = ["sx","sy","rot","dim","initc","noisec","lfc"];
+var safeRandos = ["sx","sy","rot","dim","initc","noisec","lfc","ix","iy","ixf","iyf","opacity","init","noise"];
 params = {
+    init: 10,
+    noise: 9,
     initc: 0,
     noisec: 0,
     lfc: 2,
     dim: 0.1,
     sx: 1.2,
     sy: 1.1,
+    ix: 100,
+    iy: 100,
+    ixf: 0.100,
+    iyf: 0.100,
+    opacity: 0.5,
     rot: -2.21,
     rand: function() {
         var l = safeRandos;
@@ -110,6 +140,7 @@ params = {
         var l = safeRandos;
         index = Math.floor(Math.random() * l.length);
         var x = l[index];
+        console.log("Randomizing " + x );
         if (x in randomizer) {
             params[x] = randomizer[x]();
         } else {
@@ -131,6 +162,16 @@ function processFrame() {
         var outContext  = canvas.getContext('2d');
         var workContext = workFrame.getContext('2d');
         var lastContext = lastFrame.getContext('2d');
+        var imgImg = getImage(params["init"]);
+        if (init.src != imgImg) {
+            init.src = imgImg;
+        }
+        var imgNoise = getImage(params["noise"]);
+        if (noise.src != imgNoise) {
+            noise.src = imgNoise;
+        }
+
+        
         if (first) {
             first = false;
             lastContext.globalCompositeOperation = "copy"; //source-over
@@ -146,8 +187,8 @@ function processFrame() {
         //workContext.rotate(90.0*Math.sin(0.01*t/Math.PI)*Math.PI/180);
         //workContext.translate(-width/2, -height/2);
         //workContext.drawImage(init,100*Math.sin(0.01*t/3.14)+5*Math.sin(t/3.14),200*Math.sin(0.1*t/3.14),width,height);
-        init.filter = 'opacity(0.5)';
-        workContext.drawImage(init,100*Math.sin(0.01*t/3.14)+5*Math.sin(t/3.14),100*Math.sin(0.1*t/3.14),width,height);
+        init.filter = 'opacity(' + params["opacity"] + ')';
+        workContext.drawImage(init,params["ix"]*Math.sin(params["ixf"]*t/3.14),params["iy"]*Math.sin(params["iyf"]*t/3.14),width,height);
         //workContext.drawImage(init,0,0,width,height);
         //workContext.restore();
 
@@ -160,9 +201,9 @@ function processFrame() {
         workContext.globalCompositeOperation = getComposite(params["noisec"]); //"multiply"; //source-over
         workContext.drawImage(noise,0,0,width,height);
         
-        var scalex = params["sx"] + 0.1*Math.sin(0.01*t);
-        var scaley = params["sy"] + 0.1*Math.sin(0.01*t);
-        var rot = params["rot"] + 2*Math.sin(0.01*t);
+        var scalex = params["sx"];
+        var scaley = params["sy"];
+        var rot = params["rot"];
         workContext.save();
         workContext.translate(width/2, height/2);
         workContext.rotate(rot*Math.PI/180);
