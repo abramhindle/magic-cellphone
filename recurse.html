@@ -20,6 +20,7 @@
           height: 100%;
           background: black;
           padding: 0px;
+          overflow: hidden;
       }
       #canvas {
           width: 1920px;
@@ -70,7 +71,7 @@ canvas.height = workFrame.height = lastFrame.height = height;
 var composites = ["lighter","multiply","difference","source-over"];
 var images = ["lava.png","qbist.png","recurse-init.png","sphere.png",
               "explosion.png","mess.png","qbist2.png","recurse-init2.png",
-              "i-explosion.png","overlay-noise.png","qbist3.png","rgb-noise.png"];
+              "i-explosion.png","overlay-noise.png","qbist3.png","rgb-noise.png","fractal-noise.png"];
 
     
 function getComposite(x) {
@@ -107,7 +108,7 @@ randomizer = {
     iyf:  generateRandomizer(0.0,1.0),
     dim: generateRandomizer(0.0,1.0),
     opacity: generateRandomizer(0.0,1.0),    
-    rot: generateRandomizer(0.0001,120.0)
+    rot: generateRandomizer(0.0001,12.0)
 };
 var safeRandos = ["sx","sy","rot","dim","initc","noisec","lfc","ix","iy","ixf","iyf","opacity","init","noise"];
 params = {
@@ -281,15 +282,38 @@ function submitString(command) {
     }
 }
 dontPrevent = {
-    "F11":true
+    "F11":true,
+    "r":true,
+    "R":true
 }
-/*
+
 window.addEventListener("keyup", function(e) {
+    var character = e.key;
+    console.log(character);
+    if (character == 'ArrowUp') {
+        console.log('repeat');
+        submitString(lastStr);
+    } else if (character == 'ArrowDown') {
+        submitString('rand');
+    } else if (character == 'ArrowRight') {
+        submitString('1r');
+    }
+    if (character in dontPrevent) {
+
+    } else {
         e.preventDefault();
+    }
+
 });
 window.addEventListener("keydown", function(e) {
-    e.preventDefault();
-});*/
+    var character = e.key;
+    if (character in dontPrevent) {
+
+    } else {
+        e.preventDefault();
+    }
+
+});
 window.addEventListener("keypress", function(e) {
     var character = e.key;
     console.log(character);   
@@ -298,13 +322,6 @@ window.addEventListener("keypress", function(e) {
         submitString(currStr);
         lastStr = currStr;
         currStr = "";
-    } else if (character == 'ArrowUp') {
-        console.log('repeat');
-        submitString(lastStr);
-    } else if (character == 'ArrowDown') {
-        submitString('rand');
-    } else if (character == 'ArrowRight') {
-        submitString('1r');
     } else {
         currStr += character;
     }
