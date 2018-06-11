@@ -160,6 +160,8 @@ function processFrame() {
     var noise = document.querySelector('#noise');
     var first = true;
     var t = 0;
+    var lastNoise = null;
+    var lastImg = null;
     dinterval = window.setInterval(function() {
         t++;
         var outContext  = canvas.getContext('2d');
@@ -169,14 +171,18 @@ function processFrame() {
         outContext.canvas.width  = window.innerWidth;
         outContext.canvas.height = window.innerHeight;
         var imgImg = getImage(params["init"]);
-        if (init.src != imgImg) {
+        
+        if (lastImg != imgImg) {
+            console.log("init " +init.src);
             init.src = imgImg;
+            lastImg = imgImg;
         }
         var imgNoise = getImage(params["noise"]);
-        if (noise.src != imgNoise) {
+        if (lastNoise != imgNoise) {
             noise.src = imgNoise;
+            lastNoise = imgNoise;
         }
-
+        
         
         if (first) {
             first = false;
